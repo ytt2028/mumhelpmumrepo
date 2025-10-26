@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+import '../../core/theme/colors.dart';
+import '../../core/widgets/mhm_card.dart';
+
+class PlannerScreen extends StatelessWidget {
+  const PlannerScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final label = '${_weekday(now.weekday).toUpperCase()} '
+        '${_month(now.month).toUpperCase()} ${now.day}';
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      children: [
+        const SizedBox(height: 16),
+        Text('TODAY, $label',
+            style: Theme.of(context)
+                .textTheme
+                .labelLarge
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 12),
+        MhmCard(
+          background: MhmColors.cardHealth,
+          leading: const Icon(Icons.check_circle_outline, size: 36),
+          title: 'Daily Activities',
+          lines: const ['✓ Playgroup at 10 AM', '✓ Library Storytime at 2 PM'],
+        ),
+        const SizedBox(height: 14),
+        MhmCard(
+          background: MhmColors.cardActivities,
+          leading: const Icon(Icons.restaurant_menu, size: 36),
+          title: 'Recipes',
+          lines: const ['• Chicken Stir-Fry', '• Banana Bread'],
+        ),
+        const SizedBox(height: 14),
+        MhmCard(
+          background: MhmColors.cardSupport,
+          leading: const Icon(Icons.timer_outlined, size: 36),
+          title: 'Timer',
+          lines: const ['00:00:00', ''],
+        ),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  String _weekday(int w) =>
+      ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][w - 1];
+  String _month(int m) =>
+      ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1];
+}
