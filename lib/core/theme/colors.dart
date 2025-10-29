@@ -12,4 +12,5 @@ class MhmColors {
   static const cardActivities = Color(0xFFFFC1A1); // FFC1A1
   // 文本
   static const text = Color(0xFF333333);      // 333333
+  static const buttonGrey = Color(0xFFBDBDBD); // Reset 按钮
 }

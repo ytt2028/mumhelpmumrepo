@@ -5,6 +5,7 @@ class MhmCard extends StatelessWidget {
   final Widget leading;
   final String title;
   final List<String> lines;
+  final Widget? trailing; // <— 新增：右上角小按钮
 
   const MhmCard({
     super.key,
@@ -12,6 +13,7 @@ class MhmCard extends StatelessWidget {
     required this.leading,
     required this.title,
     required this.lines,
+    this.trailing,
   });
 
   @override
@@ -38,11 +40,13 @@ class MhmCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 6),
                 ...lines.map((t) => Padding(
                       padding: const EdgeInsets.only(bottom: 2),
@@ -51,6 +55,10 @@ class MhmCard extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing!,
+          ],
         ],
       ),
     );
