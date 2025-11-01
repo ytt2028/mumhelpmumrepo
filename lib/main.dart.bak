@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mumhelpmum/core/theme/app_theme.dart';
-import 'package:mumhelpmum/features/shell/shell_screen.dart';
+import 'package:mumhelpmum/features/home/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +16,9 @@ class MhmApp extends StatelessWidget {
       title: 'MumHelpMum',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      home: const ShellScreen(),
+      // 这里不使用 const 也可以；保持简单更稳
+      home: HomeScreen(),
     );
   }
 }
+

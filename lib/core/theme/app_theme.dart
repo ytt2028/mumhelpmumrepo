@@ -9,6 +9,19 @@ ThemeData buildAppTheme() {
     scaffoldBackgroundColor: MhmColors.bg,
   );
 
+  final selectedLabel = MaterialStateProperty.resolveWith<TextStyle?>(
+    (states) => TextStyle(
+      fontWeight: FontWeight.w600,
+      color: states.contains(MaterialState.selected) ? Colors.white : MhmColors.text,
+    ),
+  );
+
+  final iconTheme = MaterialStateProperty.resolveWith<IconThemeData?>(
+    (states) => IconThemeData(
+      color: states.contains(MaterialState.selected) ? Colors.white : MhmColors.text,
+    ),
+  );
+
   return base.copyWith(
     textTheme: GoogleFonts.poppinsTextTheme().apply(
       bodyColor: MhmColors.text,
@@ -20,10 +33,19 @@ ThemeData buildAppTheme() {
       surfaceTintColor: Colors.transparent,
     ),
     cardTheme: CardThemeData(
-  color: Colors.white,
-  elevation: 0,
-  margin: EdgeInsets.zero,
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-),
+      color: Colors.white,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      height: 64,
+      backgroundColor: Colors.transparent, // 我们外层自定义容器做白底&圆角
+      indicatorColor: MhmColors.mint,
+      indicatorShape: const StadiumBorder(),
+      labelTextStyle: selectedLabel,
+      iconTheme: iconTheme,
+      surfaceTintColor: Colors.transparent,
+    ),
   );
 }
