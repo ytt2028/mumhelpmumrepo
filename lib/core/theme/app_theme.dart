@@ -9,18 +9,23 @@ ThemeData buildAppTheme() {
     scaffoldBackgroundColor: MhmColors.bg,
   );
 
-  final selectedLabel = MaterialStateProperty.resolveWith<TextStyle?>(
-    (states) => TextStyle(
+  // 底部导航：更小字号/图标，并区分选中/未选中颜色
+  final labelStyle = MaterialStateProperty.resolveWith<TextStyle?>((states) {
+    final selected = states.contains(MaterialState.selected);
+    return TextStyle(
+      fontSize: 11, // ← 你要的小字号
       fontWeight: FontWeight.w600,
-      color: states.contains(MaterialState.selected) ? Colors.white : MhmColors.text,
-    ),
-  );
+      color: selected ? Colors.white : MhmColors.text,
+    );
+  });
 
-  final iconTheme = MaterialStateProperty.resolveWith<IconThemeData?>(
-    (states) => IconThemeData(
-      color: states.contains(MaterialState.selected) ? Colors.white : MhmColors.text,
-    ),
-  );
+  final iconTheme = MaterialStateProperty.resolveWith<IconThemeData?>((states) {
+    final selected = states.contains(MaterialState.selected);
+    return IconThemeData(
+      size: 20, // ← 更小图标
+      color: selected ? Colors.white : MhmColors.text,
+    );
+  });
 
   return base.copyWith(
     textTheme: GoogleFonts.poppinsTextTheme().apply(
@@ -32,19 +37,21 @@ ThemeData buildAppTheme() {
       elevation: 0,
       surfaceTintColor: Colors.transparent,
     ),
-    cardTheme: CardThemeData(
+    cardTheme: const CardThemeData( // ✅ 用 CardThemeData
       color: Colors.white,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+      ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      height: 64,
-      backgroundColor: Colors.transparent, // 我们外层自定义容器做白底&圆角
+      height: 56,                       // 更矮
+      backgroundColor: Colors.transparent,
       indicatorColor: MhmColors.mint,
       indicatorShape: const StadiumBorder(),
-      labelTextStyle: selectedLabel,
-      iconTheme: iconTheme,
+      labelTextStyle: labelStyle,       // 小字号
+      iconTheme: iconTheme,             // 小图标
       surfaceTintColor: Colors.transparent,
     ),
   );
