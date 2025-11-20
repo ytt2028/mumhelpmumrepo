@@ -1,124 +1,196 @@
-// lib/features/hub/hub_screen.dart
 import 'package:flutter/material.dart';
+import 'package:mumhelpmum/core/state/feed_state.dart';
 import 'package:mumhelpmum/core/theme/colors.dart';
 import 'package:mumhelpmum/core/widgets/mhm_header.dart';
+import 'package:mumhelpmum/features/hub/post_model.dart';
 
-class HubScreen extends StatelessWidget {
+class HubScreen extends StatefulWidget {
   const HubScreen({super.key});
+  @override
+  State<HubScreen> createState() => _HubScreenState();
+}
+
+class _HubScreenState extends State<HubScreen> {
+  final _search = TextEditingController();
+
+  // 时间筛选
+  final List<String> _timeFilters = const ['Latest', 'This Week', 'This Month'];
+  String _timeSelected = 'Latest';
+
+  // 关注分类（两行 + More/Less）
+  static const List<String> _allCategories = [
+    'playground','indoor','stroller friendly','fenced','shaded','park','rainy day',
+    'library','storytime','museum','science centre','zoo','aquarium','art & craft',
+    'music class','swimming','playgroup','gym',
+    'kids friendly restaurant','cafe','weekend trip',
+    'nap tips','sleep training','potty training','meal ideas','breastfeeding',
+    'postpartum','mental health',
+    'free','group buy','promotions','deals','birthday ideas',
+  ];
+  bool _showAllCats = false;
+  static const int _twoRowCount = 10;
+  final Set<String> _selectedCats = {};
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    const posts = _demoPosts;
+    return ValueListenableBuilder<List<Post>>(
+      valueListenable: FeedState.I.feed,
+      builder: (context, feed, _) {
+        final filtered = _filtered(feed);
 
-    return Scaffold(
-      backgroundColor: MhmColors.bg,
-      body: SafeArea(
-        child: ListView(
+        return SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 24),
-          children: [
-            // 统一品牌头（Hub 需要铃铛 & 头像）
-            const MhmHeader(
-              title: 'MumHelpMum',
-              subtitle: 'mumhelpmum.com',
-              showMenuLeft: true,
-              showMenuRight: false,
-              showBell: true,
-              showProfile: true,
-              centerBrand: true,
-            ),
-            const SizedBox(height: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 顶部品牌条：右上角头像 + 铃铛
+              const MhmHeader(compact: true, showActions: true),
 
-            // “热点分栏”标题（示例）
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Text(
-                '热点分栏',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+              // 搜索
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                child: TextField(
+                  controller: _search,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search posts / places / tags…',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
                 ),
               ),
-            ),
 
-            // 帖子列表
-            ...posts.map((p) => _PostCard(post: p)).toList(),
-          ],
-        ),
-      ),
+              // 时间筛选
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  children: _timeFilters.map((t) {
+                    final sel = _timeSelected == t;
+                    return ChoiceChip(
+                      label: Text(t),
+                      selected: sel,
+                      onSelected: (_) => setState(() => _timeSelected = t),
+                      labelStyle: TextStyle(
+                        color: sel ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      selectedColor: MhmColors.mint,
+                      backgroundColor: Colors.white,
+                      shape: StadiumBorder(
+                        side: BorderSide(color: sel ? MhmColors.mint : Colors.black26),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              // 话题分类（两行 + More/Less）
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...(_showAllCats ? _allCategories : _allCategories.take(_twoRowCount))
+                        .map((c) => FilterChip(
+                              label: Text(c),
+                              selected: _selectedCats.contains(c),
+                              onSelected: (v) {
+                                setState(() {
+                                  if (v) {
+                                    _selectedCats.add(c);
+                                  } else {
+                                    _selectedCats.remove(c);
+                                  }
+                                });
+                              },
+                              showCheckmark: false,
+                              labelStyle: TextStyle(
+                                color: _selectedCats.contains(c) ? Colors.white : Colors.black87,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              selectedColor: MhmColors.mint,
+                              backgroundColor: Colors.white,
+                              shape: StadiumBorder(
+                                side: BorderSide(
+                                  color: _selectedCats.contains(c)
+                                      ? MhmColors.mint
+                                      : Colors.black26,
+                                ),
+                              ),
+                            )),
+                    if (!_showAllCats && _allCategories.length > _twoRowCount)
+                      ActionChip(
+                        label: const Text('More'),
+                        onPressed: () => setState(() => _showAllCats = true),
+                      ),
+                    if (_showAllCats)
+                      ActionChip(
+                        label: const Text('Less'),
+                        onPressed: () => setState(() => _showAllCats = false),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // 帖子列表
+              ...filtered.map((p) => _PostCard(post: p)).toList(),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  List<Post> _filtered(List<Post> posts) {
+    final q = _search.text.trim().toLowerCase();
+
+    bool inTime(Post p) {
+      final now = DateTime.now();
+      switch (_timeSelected) {
+        case 'This Week':
+          return p.createdAt.isAfter(now.subtract(const Duration(days: 7)));
+        case 'This Month':
+          return p.createdAt.isAfter(now.subtract(const Duration(days: 30)));
+        default:
+          return true;
+      }
+    }
+
+    final list = posts.where((p) {
+      final contentHit = q.isEmpty ||
+          p.content.toLowerCase().contains(q) ||
+          p.author.toLowerCase().contains(q) ||
+          p.tags.any((t) => t.toLowerCase().contains(q));
+      final catsHit = _selectedCats.isEmpty ||
+          p.tags.any((t) => _selectedCats.any((sel) => t.toLowerCase().contains(sel.toLowerCase())));
+      return contentHit && catsHit && inTime(p);
+    }).toList();
+
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 }
 
 /// ---------------------------
-/// Model & demo data
+/// UI: 帖子卡片
 /// ---------------------------
-
-class Post {
-  final String author;
-  final String time; // e.g. '5分钟前'
-  final String content;
-  final List<String> tags;
-  final int likes;
-  final int comments;
-  final int shares;
-  final String? imageUrl;
-
-  const Post({
-    required this.author,
-    required this.time,
-    required this.content,
-    required this.tags,
-    required this.likes,
-    required this.comments,
-    required this.shares,
-    this.imageUrl,
-  });
-}
-
-const _demoPosts = <Post>[
-  Post(
-    author: '乐乐妈',
-    time: '5分钟前',
-    content:
-        '今天有皇皇为子新桦亚游场，\n一工是放电相柞！ 压维椅\n强推荐！',
-    tags: ['#室内活动', '#亲子乐园', '#翊洪好跋提'],
-    likes: 25,
-    comments: 18,
-    shares: 5,
-    imageUrl:
-        'https://images.unsplash.com/photo-1501706362039-c06b2d715385?w=800&q=80',
-  ),
-  Post(
-    author: '小北妈',
-    time: '2小时前',
-    content:
-        '与宝最好友爱食饪，拌逗下西稞\n肥绵腻㤿！ 现场直播分了 😋',
-    tags: ['#食郅分享', '#终安家', '#拼赤旱皇'],
-    likes: 3,
-    comments: 12,
-    shares: 1,
-    imageUrl:
-        'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80',
-  ),
-  Post(
-    author: '晨秩爸',
-    time: '1天前',
-    content:
-        '投劝哔断早蛰中 的 免兔抹抹饪糊\n扶侍樽！ 名想活有， 早敳快帍！\n地址：未来龙A生，根时3斌',
-    tags: ['#地址', '#晨起分享'],
-    likes: 9,
-    comments: 6,
-    shares: 0,
-    imageUrl:
-        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80',
-  ),
-];
-
-/// ---------------------------
-/// UI
-/// ---------------------------
-
 class _PostCard extends StatelessWidget {
   const _PostCard({required this.post});
   final Post post;
@@ -131,14 +203,12 @@ class _PostCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 6)),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 6))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 头像 + 名称 + 时间 + 右侧缩略图
+          // 头像 + 名称 + 时间 + 右图
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -146,11 +216,8 @@ class _PostCard extends StatelessWidget {
                 radius: 20,
                 backgroundColor: MhmColors.lightGreen,
                 child: Text(
-                  post.author.characters.first,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  post.authorInitial,
+                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
                 ),
               ),
               const SizedBox(width: 10),
@@ -164,35 +231,25 @@ class _PostCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             post.author,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                           ),
                         ),
                         Text(
-                          post.time,
+                          post.timeAgo,
                           style: const TextStyle(color: Colors.black54, fontSize: 12),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(post.content),
-                    const SizedBox(height: 6),
-                    // 标签
+                    const SizedBox(height: 10),
+
+                    // 标签（#开头，行间距更舒适）
                     Wrap(
                       spacing: 8,
-                      runSpacing: -6,
+                      runSpacing: 8,
                       children: post.tags
-                          .map(
-                            (t) => Chip(
-                              label: Text(t),
-                              backgroundColor: Colors.grey.shade100,
-                              side: const BorderSide(color: Colors.black26),
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              labelStyle: const TextStyle(fontSize: 12),
-                            ),
-                          )
+                          .map((t) => _TagChip(text: '#${t[0].toUpperCase()}${t.substring(1)}'))
                           .toList(),
                     ),
                   ],
@@ -213,20 +270,21 @@ class _PostCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // 操作行：创建活动 / 收藏 / 评论 / 点赞 / 转发
-          Row(
+          // 操作行：Create event / Save + 右侧统计（自适应换行，不再挤压）
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _actionButton(Icons.event_outlined, '创活动'),
-              const SizedBox(width: 12),
-              _actionButton(Icons.bookmark_border, '收藏'),
-              const Spacer(),
-              _iconStat(Icons.mode_comment_outlined, post.comments),
-              const SizedBox(width: 12),
-              _iconStat(Icons.favorite_border, post.likes),
-              const SizedBox(width: 12),
-              _iconStat(Icons.reply_outlined, post.shares),
+              _actionButton(Icons.event_outlined, 'Create event'),
+              _actionButton(Icons.bookmark_border, 'Save'),
+              _StatGroup(
+                comments: post.comments,
+                likes: post.likes,
+                shares: post.shares,
+              ),
             ],
           ),
         ],
@@ -242,6 +300,7 @@ class _PostCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: Colors.black54),
           const SizedBox(width: 6),
@@ -250,14 +309,54 @@ class _PostCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _StatGroup extends StatelessWidget {
+  const _StatGroup({required this.comments, required this.likes, required this.shares});
+  final int comments;
+  final int likes;
+  final int shares;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _iconStat(Icons.mode_comment_outlined, comments),
+        const SizedBox(width: 12),
+        _iconStat(Icons.favorite_border, likes),
+        const SizedBox(width: 12),
+        _iconStat(Icons.reply_outlined, shares),
+      ],
+    );
+  }
 
   Widget _iconStat(IconData icon, int n) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 18, color: Colors.black45),
         const SizedBox(width: 4),
         Text('$n', style: const TextStyle(color: Colors.black54)),
       ],
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(text),
+      backgroundColor: Colors.grey.shade100,
+      side: const BorderSide(color: Colors.black26),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+      labelStyle: const TextStyle(fontSize: 12),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
     );
   }
 }

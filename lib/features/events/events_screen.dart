@@ -50,15 +50,13 @@ class _EventsScreenState extends State<EventsScreen> {
           children: [
             // 统一品牌头（Events 不要铃铛/头像）
             const MhmHeader(
-              title: 'MumHelpMum',
-              subtitle: 'mumhelpmum.com',
-              showMenuLeft: true,
-              showMenuRight: false,
-              showBell: false,
-              showProfile: false,
-              centerBrand: true,
-            ),
-            const SizedBox(height: 8),
+            compact: true,            // 紧凑字号
+            showActions: false,       // 不显示头像/铃铛
+            showHamburgerLeft: true,  // 左侧汉堡
+            showOverflowRight: false, // 右侧更多
+          ),
+          const SizedBox(height: 8),
+
 
             // 搜索栏
             Padding(

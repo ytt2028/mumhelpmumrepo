@@ -13,16 +13,14 @@ class DealsScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
           // 统一品牌头
-          const MhmHeader(
-            title: 'MumHelpMum',
-            subtitle: 'mumhelpmum.com',
-            showMenuLeft: true,
-            showMenuRight: false,
-            showBell: false,
-            showProfile: false,
-            centerBrand: true,
-          ),
-          const SizedBox(height: 8),
+          // 顶部品牌头（新 API）
+            const MhmHeader(
+              compact: true,            // 紧凑字号
+              showActions: false,       // 不显示头像/铃铛
+              showHamburgerLeft: true,  // 左侧汉堡
+              showOverflowRight: false, // 右侧更多菜单
+            ),
+            const SizedBox(height: 8),
 
           // 顶部筛选 Chips：Free / Group Buy / MHM Benifit（妈帮专享）
           _DealsChips(),

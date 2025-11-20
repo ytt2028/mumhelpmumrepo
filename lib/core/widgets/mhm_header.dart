@@ -1,20 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mumhelpmum/core/theme/colors.dart';
+import 'package:mumhelpmum/features/profile/profile_screen.dart';
 
-/// 兼容两套参数：
-/// 新：title / subtitle / showMenuLeft / showMenuRight / showBell / showProfile / centerBrand
-/// 旧：compact / showActions / showHamburgerLeft / showOverflowRight
+/// 统一品牌头（保持你原有 API）
 class MhmHeader extends StatelessWidget {
-  // —— 新参数（推荐）——
-  final String? title;
-  final String? subtitle;
-  final bool? showMenuLeft;
-  final bool? showMenuRight;
-  final bool? showBell;
-  final bool? showProfile;
-  final bool? centerBrand;
-
-  // —— 旧参数（兼容）——
   final bool compact;
   final bool showActions;
   final bool showHamburgerLeft;
@@ -22,54 +12,14 @@ class MhmHeader extends StatelessWidget {
 
   const MhmHeader({
     super.key,
-    // 新参数
-    this.title,
-    this.subtitle,
-    this.showMenuLeft,
-    this.showMenuRight,
-    this.showBell,
-    this.showProfile,
-    this.centerBrand,
-    // 旧参数（保留默认）
     this.compact = false,
     this.showActions = false,
     this.showHamburgerLeft = true,
     this.showOverflowRight = false,
   });
 
-  /// 首页 Hub 用（示例预设）
-  static const Widget brandDefault = MhmHeader(
-    title: 'MumHelpMum',
-    subtitle: 'mumhelpmum.com',
-    showMenuLeft: true,
-    showMenuRight: false,
-    showBell: true,
-    showProfile: true,
-    centerBrand: true,
-  );
-
-  /// 其它页（Planner/Events/Deals）用（示例预设）
-  static const Widget brandBasic = MhmHeader(
-    title: 'MumHelpMum',
-    subtitle: 'mumhelpmum.com',
-    showMenuLeft: true,
-    showMenuRight: false,
-    showBell: false,
-    showProfile: false,
-    centerBrand: true,
-  );
-
   @override
   Widget build(BuildContext context) {
-    // —— 计算“有效值”：新参数优先，缺省则回落到旧参数 —— 
-    final String effTitle      = title     ?? 'MumHelpMum';
-    final String effSubtitle   = subtitle  ?? 'mumhelpmum.com';
-    final bool   effMenuLeft   = showMenuLeft  ?? showHamburgerLeft;
-    final bool   effMenuRight  = showMenuRight ?? showOverflowRight;
-    final bool   effShowBell   = showBell      ?? showActions;
-    final bool   effShowProfile= showProfile   ?? showActions;
-    final bool   effCenter     = centerBrand   ?? true;
-
     final titleStyle = TextStyle(
       fontWeight: FontWeight.w800,
       fontSize: compact ? 20 : 24,
@@ -82,72 +32,91 @@ class MhmHeader extends StatelessWidget {
       height: 1.0,
     );
 
+    final user = FirebaseAuth.instance.currentUser;
+
+    Widget avatarButton() {
+      if (user == null) {
+        return const Icon(Icons.person_outline);
+      }
+      final letter =
+          (user.displayName ?? user.email ?? 'U').trim().characters.first.toUpperCase();
+      final photo = user.photoURL;
+
+      final avatar = CircleAvatar(
+        radius: compact ? 14 : 16,
+        backgroundColor: Colors.black12,
+        backgroundImage: photo != null ? NetworkImage(photo) : null,
+        child: photo == null
+            ? Text(letter, style: const TextStyle(color: Colors.black87))
+            : null,
+      );
+
+      return PopupMenuButton<String>(
+        tooltip: 'Account',
+        offset: const Offset(0, 10),
+        itemBuilder: (_) => const [
+          PopupMenuItem(value: 'profile', child: Text('Edit profile')),
+          PopupMenuItem(value: 'signout', child: Text('Sign out')),
+        ],
+        onSelected: (v) async {
+          if (v == 'profile') {
+            if (context.mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            }
+          } else if (v == 'signout') {
+            await FirebaseAuth.instance.signOut();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Signed out')),
+              );
+            }
+          }
+        },
+        child: avatar,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      child: SizedBox(
-        height: 56,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // 中间品牌（可居中/居左）
-            Align(
-              alignment: effCenter ? Alignment.center : Alignment.centerLeft,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(mainAxisSize: MainAxisSize.min, children: [
+      child: Row(
+        children: [
+          if (showHamburgerLeft)
+            IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
+
+          // 中间 LOGO
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     const Icon(Icons.favorite, size: 20, color: MhmColors.coral),
                     const SizedBox(width: 6),
-                    Text(effTitle, style: titleStyle),
-                  ]),
-                  const SizedBox(height: 2),
-                  Text(effSubtitle, style: subStyle),
-                ],
-              ),
+                    Text('MumHelpMum', style: titleStyle),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text('mumhelpmum.com', style: subStyle),
+              ],
             ),
+          ),
 
-            // 左侧
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                if (effMenuLeft)
-                  IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {},
-                    tooltip: 'Menu',
-                  ),
-              ]),
+          if (showActions) ...[
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              onPressed: () {},
+              tooltip: 'Notifications',
             ),
-
-            // 右侧
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                if (effShowBell)
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none),
-                    onPressed: () {},
-                    tooltip: 'Notifications',
-                  ),
-                if (effShowProfile)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4),
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.black12,
-                      child: Icon(Icons.person, color: Colors.black54, size: 18),
-                    ),
-                  ),
-                if (effMenuRight)
-                  IconButton(
-                    icon: const Icon(Icons.menu_rounded),
-                    onPressed: () {},
-                    tooltip: 'More',
-                  ),
-              ]),
-            ),
+            avatarButton(),
           ],
-        ),
+
+          if (showOverflowRight)
+            IconButton(icon: const Icon(Icons.menu_rounded), onPressed: () {}),
+        ],
       ),
     );
   }
